@@ -1,0 +1,29 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    - task: update
+    - task: fmt
+    - task: build
+    - task: lint
+    - task: check
+
+  fmt:
+    - goimports -w -l .
+    - gofumpt -w -l .
+
+  lint:
+    - go vet ./...
+    - staticcheck ./...
+
+  update:
+    - go get -u all
+    - go mod tidy
+
+  build:
+    - go build -o sf_loader.exe -ldflags "-s -w"
+
+  check:
+    - govulncheck ./...
