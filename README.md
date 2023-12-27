@@ -31,7 +31,7 @@ Run command line in project directory with command
 go build -o sf_loader.exe -ldflags "-s -w"
 ```
 
-Then you need to build all gradle services, go to gradle cache dir (usually c:\Users\USER\.gradle\caches\modules-2\files-2.1\).
+Then you need to build all gradle services, go to gradle cache dir (usually c:\Users\USER\\.gradle\caches\modules-2\files-2.1\).
 Put .env file and sf_loader.exe and run.
 
 For npm packages put package-lock.json near the executable file, optionally in separated folder and run.
