@@ -7,4 +7,4 @@ require (
 	github.com/samber/lo v1.39.0
 )
 
-require golang.org/x/exp v0.0.0-20231226003508-02704c960a9b // indirect
+require golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect

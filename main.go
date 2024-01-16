@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -17,7 +18,11 @@ import (
 )
 
 type jarField struct {
-	groupId, artifactId, version, name, path string
+	GroupID    string `xml:"groupId,omitempty"`
+	ArtifactID string `xml:"artifactId,omitempty"`
+	Version    string `xml:"version,omitempty"`
+	Name       string
+	Path       string
 }
 
 func main() {
@@ -35,6 +40,7 @@ func main() {
 	outputFile := os.Getenv("outputFile")
 	useCurl, _ := strconv.ParseBool(os.Getenv("useCurl"))
 	mvnRepoId := os.Getenv("mvnRepoId")
+	useGradleCache, _ := strconv.ParseBool(os.Getenv("useGradleCache"))
 
 	curDir, err := os.Getwd()
 	if err != nil {
@@ -55,64 +61,133 @@ func main() {
 		}
 		jfs := make([]jarField, 0)
 		artifactIds := make([]string, 0)
-		for _, file := range files {
+		for i, file := range files {
 			fmt.Println(file)
-			sp := strings.Split(file, "\\")
-			if len(sp) != 5 {
-				continue
-			}
-			if len(filterGroup) >= 1 && filterGroup[0] != "" {
-				for _, prefix := range filterGroup {
-					if !strings.HasPrefix(sp[0], prefix) {
-						continue
-					} else {
-						var jf jarField
-						jf.groupId = sp[0]
-						jf.artifactId = sp[1]
-						jf.version = sp[2]
-						jf.name = sp[4]
-						jf.path = file
-						jfs = append(jfs, jf)
-						if !slices.Contains(artifactIds, jf.artifactId) {
-							if useCurl {
-								// use curl (can not work sometimes)
-								curlStr := "curl " + sfMavenUrl +
-									"//" + jf.groupId +
-									"//" + jf.artifactId +
-									"//" + jf.version +
-									"//" + jf.name +
-									" --upload-file " + jf.path +
-									" -k -u " + sfLogin + ":" + sfPass +
-									" --request PUT"
-								w.WriteString(curlStr + "\n")
-							} else {
-								artifactIds = append(artifactIds, jf.artifactId)
+			// запустили в папке с гредл кешом
+			if useGradleCache {
+				sp := strings.Split(file, "\\")
+				if len(sp) != 5 {
+					continue
+				}
+				if len(filterGroup) >= 1 && filterGroup[0] != "" {
+					for _, prefix := range filterGroup {
+						if !strings.HasPrefix(sp[0], prefix) {
+							continue
+						} else {
+							var jf jarField
+							jf.GroupID = sp[0]
+							jf.ArtifactID = sp[1]
+							jf.Version = sp[2]
+							jf.Name = sp[4]
+							jf.Path = file
+							jfs = append(jfs, jf)
+							if !slices.Contains(artifactIds, jf.ArtifactID) {
+								if useCurl {
+									// use curl (can not work sometimes)
+									curlStr := "curl " + sfMavenUrl +
+										"//" + jf.GroupID +
+										"//" + jf.ArtifactID +
+										"//" + jf.Version +
+										"//" + jf.Name +
+										" --upload-file " + jf.Path +
+										" -k -u " + sfLogin + ":" + sfPass +
+										" --request PUT"
+									w.WriteString(curlStr + "\n")
+								} else {
+									artifactIds = append(artifactIds, jf.ArtifactID)
+								}
 							}
+						}
+					}
+				} else {
+					var jf jarField
+					jf.GroupID = sp[0]
+					jf.ArtifactID = sp[1]
+					jf.Version = sp[2]
+					jf.Name = sp[4]
+					jf.Path = file
+					jfs = append(jfs, jf)
+					if !slices.Contains(artifactIds, jf.ArtifactID) {
+						if useCurl {
+							// use curl (can not work sometimes)
+							curlStr := "curl " + sfMavenUrl +
+								"//" + jf.GroupID +
+								"//" + jf.ArtifactID +
+								"//" + jf.Version +
+								"//" + jf.Name +
+								" --upload-file " + jf.Path +
+								" -k -u " + sfLogin + ":" + sfPass +
+								" --request PUT"
+							w.WriteString(curlStr + "\n")
+						} else {
+							artifactIds = append(artifactIds, jf.ArtifactID)
 						}
 					}
 				}
 			} else {
-				var jf jarField
-				jf.groupId = sp[0]
-				jf.artifactId = sp[1]
-				jf.version = sp[2]
-				jf.name = sp[4]
-				jf.path = file
-				jfs = append(jfs, jf)
-				if !slices.Contains(artifactIds, jf.artifactId) {
-					if useCurl {
-						// use curl (can not work sometimes)
-						curlStr := "curl " + sfMavenUrl +
-							"//" + jf.groupId +
-							"//" + jf.artifactId +
-							"//" + jf.version +
-							"//" + jf.name +
-							" --upload-file " + jf.path +
-							" -k -u " + sfLogin + ":" + sfPass +
-							" --request PUT"
-						w.WriteString(curlStr + "\n")
-					} else {
-						artifactIds = append(artifactIds, jf.artifactId)
+				// запустили в папке с мавен кешом
+				fileExtension := filepath.Ext(file)
+				if fileExtension == ".pom" {
+					pomField, ere := Parse(file)
+					if ere == nil {
+						pomField.Name = filepath.Base(file)
+						pomField.Path = file
+						if len(filterGroup) >= 1 && filterGroup[0] != "" {
+							for _, prefix := range filterGroup {
+								if !strings.HasPrefix(pomField.GroupID, prefix) {
+									continue
+								} else {
+									jfs = append(jfs, *pomField)
+									if !slices.Contains(artifactIds, pomField.ArtifactID) {
+										if useCurl {
+											// use curl (can not work sometimes)
+											curlStr := "curl " + sfMavenUrl +
+												"//" + pomField.GroupID +
+												"//" + pomField.ArtifactID +
+												"//" + pomField.Version +
+												"//" + pomField.Name +
+												" --upload-file " + pomField.Path +
+												" -k -u " + sfLogin + ":" + sfPass +
+												" --request PUT"
+											w.WriteString(curlStr + "\n")
+										} else {
+											artifactIds = append(artifactIds, pomField.ArtifactID)
+										}
+									}
+								}
+							}
+						}
+					}
+				} else {
+					pomField, ere := Parse(files[i+1])
+					if ere == nil {
+						pomField.Name = filepath.Base(file)
+						pomField.Path = file
+						if len(filterGroup) >= 1 && filterGroup[0] != "" {
+							for _, prefix := range filterGroup {
+								if !strings.HasPrefix(pomField.GroupID, prefix) {
+									continue
+								} else {
+									jfs = append(jfs, *pomField)
+									if !slices.Contains(artifactIds, pomField.ArtifactID) {
+										if useCurl {
+											// use curl (can not work sometimes)
+											curlStr := "curl " + sfMavenUrl +
+												"//" + pomField.GroupID +
+												"//" + pomField.ArtifactID +
+												"//" + pomField.Version +
+												"//" + pomField.Name +
+												" --upload-file " + pomField.Path +
+												" -k -u " + sfLogin + ":" + sfPass +
+												" --request PUT"
+											w.WriteString(curlStr + "\n")
+										} else {
+											artifactIds = append(artifactIds, pomField.ArtifactID)
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 			}
@@ -121,14 +196,14 @@ func main() {
 			// use maven deploy
 			for _, art := range artifactIds {
 				grouped := lo.GroupBy(jfs, func(index jarField) bool {
-					return index.artifactId == art
+					return index.ArtifactID == art
 				})
 				versions := make([]string, 0)
 				for i, arts := range grouped {
 					if i {
 						for _, ar := range arts {
-							if !slices.Contains(versions, ar.version) {
-								versions = append(versions, ar.version)
+							if !slices.Contains(versions, ar.Version) {
+								versions = append(versions, ar.Version)
 							}
 						}
 					} else {
@@ -138,7 +213,7 @@ func main() {
 				for _, ver := range versions {
 					for i, arts := range grouped {
 						groupedVer := lo.GroupBy(arts, func(index jarField) bool {
-							return index.version == ver
+							return index.Version == ver
 						})
 						if !i {
 							continue
@@ -150,12 +225,12 @@ func main() {
 							if len(byVer) == 1 {
 								mvnStr := "mvn" + " deploy:deploy-file" +
 									" -DrepositoryId=" + mvnRepoId +
-									" -DgroupId=" + byVer[0].groupId +
-									" -DartifactId=" + byVer[0].artifactId +
-									" -Dversion=" + byVer[0].version +
+									" -DgroupId=" + byVer[0].GroupID +
+									" -DartifactId=" + byVer[0].ArtifactID +
+									" -Dversion=" + byVer[0].Version +
 									" -Durl=" + sfMavenUrl +
-									" -Dfile=" + byVer[0].path +
-									" -DpomFile=" + byVer[0].path +
+									" -Dfile=" + byVer[0].Path +
+									" -DpomFile=" + byVer[0].Path +
 									" -s settings.xml"
 								w.WriteString(mvnStr + "\n")
 								continue
@@ -164,18 +239,17 @@ func main() {
 								var pomFile string
 								var jarFile string
 								for _, ar := range byVer {
-									if strings.HasSuffix(ar.path, ".jar") {
-										// filteredJars = append(filteredJars, ar)
-										jarFile = ar.path
+									if strings.HasSuffix(ar.Path, ".jar") {
+										jarFile = ar.Path
 									} else {
-										pomFile = ar.path
+										pomFile = ar.Path
 									}
 								}
 								mvnStr := "mvn" + " deploy:deploy-file" +
 									" -DrepositoryId=" + mvnRepoId +
-									" -DgroupId=" + byVer[0].groupId +
-									" -DartifactId=" + byVer[0].artifactId +
-									" -Dversion=" + byVer[0].version +
+									" -DgroupId=" + byVer[0].GroupID +
+									" -DartifactId=" + byVer[0].ArtifactID +
+									" -Dversion=" + byVer[0].Version +
 									" -Durl=" + sfMavenUrl +
 									" -Dfile=" + jarFile +
 									" -DpomFile=" + pomFile +
@@ -228,10 +302,29 @@ func filePathWalkDir(root string) ([]string, error) {
 	var files []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		name := info.Name()
-		if name != ".git" && name != ".idea" && !info.IsDir() && (strings.HasSuffix(name, ".pom") || strings.HasSuffix(name, ".jar")) {
+		if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea") {
+			return filepath.SkipDir
+		} else if strings.HasSuffix(name, ".pom") || strings.HasSuffix(name, ".jar") {
 			files = append(files, path)
 		}
 		return nil
 	})
 	return files, err
+}
+
+func Parse(path string) (*jarField, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	b, _ := io.ReadAll(file)
+	var project jarField
+
+	err = xml.Unmarshal(b, &project)
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
 }
