@@ -3,7 +3,7 @@
 
 ## Features
 
-- Generate curl/mvn-deploy by local gradle cache
+- Generate curl/mvn-deploy by local gradle/maven cache
 - Parse package-lock.json, download packages and generate curl to load
 
 ## Prepare .env file
