@@ -223,7 +223,7 @@ func main() {
 								continue
 							}
 							if len(byVer) == 1 {
-								mvnStr := "mvn" + " deploy:deploy-file" +
+								mvnStr := "call mvn deploy:deploy-file" +
 									" -DrepositoryId=" + mvnRepoId +
 									" -DgroupId=" + byVer[0].GroupID +
 									" -DartifactId=" + byVer[0].ArtifactID +
@@ -245,7 +245,7 @@ func main() {
 										pomFile = ar.Path
 									}
 								}
-								mvnStr := "mvn" + " deploy:deploy-file" +
+								mvnStr := "call mvn deploy:deploy-file" +
 									" -DrepositoryId=" + mvnRepoId +
 									" -DgroupId=" + byVer[0].GroupID +
 									" -DartifactId=" + byVer[0].ArtifactID +
