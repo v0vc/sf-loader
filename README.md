@@ -3,8 +3,8 @@
 
 ## Features
 
-- Generate curl/mvn-deploy by local gradle/maven cache
-- Parse package-lock.json, download packages and generate curl to load
+- Generate curl/mvn-deploy script by local gradle/maven cache.
+- Parse package-lock.json, download packages and generate curl script.
 
 ## Prepare .env file
 
@@ -24,9 +24,9 @@ You need to add .env file with this data:
 
 ## How to use
 
-sf-loader requires [Go](https://go.dev/dl/) v1.21.5+ to build
+sf-loader requires [Go](https://go.dev/dl/) v1.21.5+ to build.
 
-Run command line in project directory with command
+Run command line in project directory with command:
 
 ```sh
 go build -o sf_loader.exe -ldflags "-s -w"
