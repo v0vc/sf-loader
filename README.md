@@ -1,5 +1,5 @@
 # sf-loader
-## transfer your artefacts easy!
+## Transfer your artefacts easy!
 
 ## Features
 
