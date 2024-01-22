@@ -65,7 +65,7 @@ func main() {
 			fmt.Println(file)
 			// запустили в папке с гредл кешом
 			if useGradleCache {
-				sp := strings.Split(file, "\\")
+				sp := strings.Split(file, string(os.PathSeparator))
 				if len(sp) != 5 {
 					continue
 				}
