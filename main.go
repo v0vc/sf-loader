@@ -156,6 +156,30 @@ func main() {
 									}
 								}
 							}
+						} else {
+							var jf jarField
+							jf.GroupID = pomField.GroupID
+							jf.ArtifactID = pomField.ArtifactID
+							jf.Version = pomField.Version
+							jf.Name = pomField.Name
+							jf.Path = file
+							jfs = append(jfs, jf)
+							if !slices.Contains(artifactIds, jf.ArtifactID) {
+								if useCurl {
+									// use curl (can not work sometimes)
+									curlStr := "curl " + sfMavenUrl +
+										"//" + jf.GroupID +
+										"//" + jf.ArtifactID +
+										"//" + jf.Version +
+										"//" + jf.Name +
+										" --upload-file " + jf.Path +
+										" -k -u " + sfLogin + ":" + sfPass +
+										" --request PUT"
+									w.WriteString(curlStr + "\n")
+								} else {
+									artifactIds = append(artifactIds, jf.ArtifactID)
+								}
+							}
 						}
 					}
 				} else {
@@ -185,6 +209,30 @@ func main() {
 											artifactIds = append(artifactIds, pomField.ArtifactID)
 										}
 									}
+								}
+							}
+						} else {
+							var jf jarField
+							jf.GroupID = pomField.GroupID
+							jf.ArtifactID = pomField.ArtifactID
+							jf.Version = pomField.Version
+							jf.Name = pomField.Name
+							jf.Path = file
+							jfs = append(jfs, jf)
+							if !slices.Contains(artifactIds, jf.ArtifactID) {
+								if useCurl {
+									// use curl (can not work sometimes)
+									curlStr := "curl " + sfMavenUrl +
+										"//" + jf.GroupID +
+										"//" + jf.ArtifactID +
+										"//" + jf.Version +
+										"//" + jf.Name +
+										" --upload-file " + jf.Path +
+										" -k -u " + sfLogin + ":" + sfPass +
+										" --request PUT"
+									w.WriteString(curlStr + "\n")
+								} else {
+									artifactIds = append(artifactIds, jf.ArtifactID)
 								}
 							}
 						}
@@ -302,7 +350,7 @@ func filePathWalkDir(root string) ([]string, error) {
 	var files []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		name := info.Name()
-		if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea") {
+		if info.IsDir() && (info.Name() == ".git" || info.Name() == ".idea" || info.Name() == "__MACOSX") {
 			return filepath.SkipDir
 		} else if strings.HasSuffix(name, ".pom") || strings.HasSuffix(name, ".jar") {
 			files = append(files, path)
