@@ -272,6 +272,9 @@ func main() {
 							}
 							if len(byVer) == 1 {
 								mvnStr := "call mvn deploy:deploy-file" +
+									" -Dmaven.wagon.http.ssl.insecure=true" +
+									" -Dmaven.wagon.http.ssl.allowall=true" +
+									" -Dmaven.wagon.http.ssl.ignore.validity.dates=true" +
 									" -DrepositoryId=" + mvnRepoId +
 									" -DgroupId=" + byVer[0].GroupID +
 									" -DartifactId=" + byVer[0].ArtifactID +
@@ -294,6 +297,9 @@ func main() {
 									}
 								}
 								mvnStr := "call mvn deploy:deploy-file" +
+									" -Dmaven.wagon.http.ssl.insecure=true" +
+									" -Dmaven.wagon.http.ssl.allowall=true" +
+									" -Dmaven.wagon.http.ssl.ignore.validity.dates=true" +
 									" -DrepositoryId=" + mvnRepoId +
 									" -DgroupId=" + byVer[0].GroupID +
 									" -DartifactId=" + byVer[0].ArtifactID +
