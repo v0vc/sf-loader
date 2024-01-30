@@ -31,6 +31,10 @@ Run command line in project directory with command:
 ```sh
 go build -o sf_loader.exe -ldflags "-s -w"
 ```
+or
+```sh
+GOARCH=amd64 GOOS=linux go build -ldflags="-extldflags=-static"
+```
 
 Then you need to build all gradle services, go to gradle cache dir if useGradleCache=true (usually c:\Users\USER\\.gradle\caches\modules-2\files-2.1).
 Or maven cache dir if useGradleCache=false (usually c:\Users\USER\\.m2).
