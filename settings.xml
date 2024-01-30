@@ -1,0 +1,10 @@
+<settings>
+  <localRepository>./</localRepository>
+  <servers>
+    <server>
+      <id>sf</id>
+      <username></username>
+      <password></password>
+    </server>
+  </servers>
+</settings>
