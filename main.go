@@ -25,6 +25,14 @@ type jarField struct {
 	Path       string
 }
 
+type jarFieldParent struct {
+	Parent struct {
+		ArtifactID string `xml:"artifactId,omitempty"`
+		GroupID    string `xml:"groupId,omitempty"`
+		Version    string `xml:"version,omitempty"`
+	} `xml:"parent,omitempty"`
+}
+
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -129,111 +137,143 @@ func main() {
 				fileExtension := filepath.Ext(file)
 				if fileExtension == ".pom" {
 					pomField, ere := Parse(file)
-					if ere == nil {
-						pomField.Name = filepath.Base(file)
-						pomField.Path = file
-						if len(filterGroup) >= 1 && filterGroup[0] != "" {
-							for _, prefix := range filterGroup {
-								if !strings.HasPrefix(pomField.GroupID, prefix) {
-									continue
-								} else {
-									jfs = append(jfs, *pomField)
-									if !slices.Contains(artifactIds, pomField.ArtifactID) {
-										if useCurl {
-											// use curl (can not work sometimes)
-											curlStr := "curl " + sfMavenUrl +
-												"//" + pomField.GroupID +
-												"//" + pomField.ArtifactID +
-												"//" + pomField.Version +
-												"//" + pomField.Name +
-												" --upload-file " + pomField.Path +
-												" -k -u " + sfLogin + ":" + sfPass +
-												" --request PUT"
-											w.WriteString(curlStr + "\n")
-										} else {
-											artifactIds = append(artifactIds, pomField.ArtifactID)
-										}
+					if ere != nil {
+						continue
+					}
+					if pomField.GroupID == "" || pomField.Version == "" || pomField.ArtifactID == "" {
+						pomParent, e := ParseParent(file)
+						if e != nil {
+							continue
+						}
+						if pomField.GroupID == "" && pomParent.Parent.GroupID != "" {
+							pomField.GroupID = pomParent.Parent.GroupID
+						}
+						if pomField.Version == "" && pomParent.Parent.Version != "" {
+							pomField.Version = pomParent.Parent.Version
+						}
+						if pomField.ArtifactID == "" && pomParent.Parent.ArtifactID != "" {
+							pomField.ArtifactID = pomParent.Parent.ArtifactID
+						}
+					}
+					pomField.Name = filepath.Base(file)
+					pomField.Path = file
+					if len(filterGroup) >= 1 && filterGroup[0] != "" {
+						for _, prefix := range filterGroup {
+							if !strings.HasPrefix(pomField.GroupID, prefix) {
+								continue
+							} else {
+								jfs = append(jfs, *pomField)
+								if !slices.Contains(artifactIds, pomField.ArtifactID) {
+									if useCurl {
+										// use curl (can not work sometimes)
+										curlStr := "curl " + sfMavenUrl +
+											"//" + pomField.GroupID +
+											"//" + pomField.ArtifactID +
+											"//" + pomField.Version +
+											"//" + pomField.Name +
+											" --upload-file " + pomField.Path +
+											" -k -u " + sfLogin + ":" + sfPass +
+											" --request PUT"
+										w.WriteString(curlStr + "\n")
+									} else {
+										artifactIds = append(artifactIds, pomField.ArtifactID)
 									}
 								}
 							}
-						} else {
-							var jf jarField
-							jf.GroupID = pomField.GroupID
-							jf.ArtifactID = pomField.ArtifactID
-							jf.Version = pomField.Version
-							jf.Name = pomField.Name
-							jf.Path = file
-							jfs = append(jfs, jf)
-							if !slices.Contains(artifactIds, jf.ArtifactID) {
-								if useCurl {
-									// use curl (can not work sometimes)
-									curlStr := "curl " + sfMavenUrl +
-										"//" + jf.GroupID +
-										"//" + jf.ArtifactID +
-										"//" + jf.Version +
-										"//" + jf.Name +
-										" --upload-file " + jf.Path +
-										" -k -u " + sfLogin + ":" + sfPass +
-										" --request PUT"
-									w.WriteString(curlStr + "\n")
-								} else {
-									artifactIds = append(artifactIds, jf.ArtifactID)
-								}
+						}
+					} else {
+						var jf jarField
+						jf.GroupID = pomField.GroupID
+						jf.ArtifactID = pomField.ArtifactID
+						jf.Version = pomField.Version
+						jf.Name = pomField.Name
+						jf.Path = file
+						jfs = append(jfs, jf)
+						if !slices.Contains(artifactIds, jf.ArtifactID) {
+							if useCurl {
+								// use curl (can not work sometimes)
+								curlStr := "curl " + sfMavenUrl +
+									"//" + jf.GroupID +
+									"//" + jf.ArtifactID +
+									"//" + jf.Version +
+									"//" + jf.Name +
+									" --upload-file " + jf.Path +
+									" -k -u " + sfLogin + ":" + sfPass +
+									" --request PUT"
+								w.WriteString(curlStr + "\n")
+							} else {
+								artifactIds = append(artifactIds, jf.ArtifactID)
 							}
 						}
 					}
 				} else {
 					pomField, ere := Parse(files[i+1])
-					if ere == nil {
-						pomField.Name = filepath.Base(file)
-						pomField.Path = file
-						if len(filterGroup) >= 1 && filterGroup[0] != "" {
-							for _, prefix := range filterGroup {
-								if !strings.HasPrefix(pomField.GroupID, prefix) {
-									continue
-								} else {
-									jfs = append(jfs, *pomField)
-									if !slices.Contains(artifactIds, pomField.ArtifactID) {
-										if useCurl {
-											// use curl (can not work sometimes)
-											curlStr := "curl " + sfMavenUrl +
-												"//" + pomField.GroupID +
-												"//" + pomField.ArtifactID +
-												"//" + pomField.Version +
-												"//" + pomField.Name +
-												" --upload-file " + pomField.Path +
-												" -k -u " + sfLogin + ":" + sfPass +
-												" --request PUT"
-											w.WriteString(curlStr + "\n")
-										} else {
-											artifactIds = append(artifactIds, pomField.ArtifactID)
-										}
+					if ere != nil {
+						continue
+					}
+					if pomField.GroupID == "" || pomField.Version == "" || pomField.ArtifactID == "" {
+						pomParent, e := ParseParent(files[i+1])
+						if e != nil {
+							continue
+						}
+						if pomField.GroupID == "" && pomParent.Parent.GroupID != "" {
+							pomField.GroupID = pomParent.Parent.GroupID
+						}
+						if pomField.Version == "" && pomParent.Parent.Version != "" {
+							pomField.Version = pomParent.Parent.Version
+						}
+						if pomField.ArtifactID == "" && pomParent.Parent.ArtifactID != "" {
+							pomField.ArtifactID = pomParent.Parent.ArtifactID
+						}
+					}
+					pomField.Name = filepath.Base(file)
+					pomField.Path = file
+					if len(filterGroup) >= 1 && filterGroup[0] != "" {
+						for _, prefix := range filterGroup {
+							if !strings.HasPrefix(pomField.GroupID, prefix) {
+								continue
+							} else {
+								jfs = append(jfs, *pomField)
+								if !slices.Contains(artifactIds, pomField.ArtifactID) {
+									if useCurl {
+										// use curl (can not work sometimes)
+										curlStr := "curl " + sfMavenUrl +
+											"//" + pomField.GroupID +
+											"//" + pomField.ArtifactID +
+											"//" + pomField.Version +
+											"//" + pomField.Name +
+											" --upload-file " + pomField.Path +
+											" -k -u " + sfLogin + ":" + sfPass +
+											" --request PUT"
+										w.WriteString(curlStr + "\n")
+									} else {
+										artifactIds = append(artifactIds, pomField.ArtifactID)
 									}
 								}
 							}
-						} else {
-							var jf jarField
-							jf.GroupID = pomField.GroupID
-							jf.ArtifactID = pomField.ArtifactID
-							jf.Version = pomField.Version
-							jf.Name = pomField.Name
-							jf.Path = file
-							jfs = append(jfs, jf)
-							if !slices.Contains(artifactIds, jf.ArtifactID) {
-								if useCurl {
-									// use curl (can not work sometimes)
-									curlStr := "curl " + sfMavenUrl +
-										"//" + jf.GroupID +
-										"//" + jf.ArtifactID +
-										"//" + jf.Version +
-										"//" + jf.Name +
-										" --upload-file " + jf.Path +
-										" -k -u " + sfLogin + ":" + sfPass +
-										" --request PUT"
-									w.WriteString(curlStr + "\n")
-								} else {
-									artifactIds = append(artifactIds, jf.ArtifactID)
-								}
+						}
+					} else {
+						var jf jarField
+						jf.GroupID = pomField.GroupID
+						jf.ArtifactID = pomField.ArtifactID
+						jf.Version = pomField.Version
+						jf.Name = pomField.Name
+						jf.Path = file
+						jfs = append(jfs, jf)
+						if !slices.Contains(artifactIds, jf.ArtifactID) {
+							if useCurl {
+								// use curl (can not work sometimes)
+								curlStr := "curl " + sfMavenUrl +
+									"//" + jf.GroupID +
+									"//" + jf.ArtifactID +
+									"//" + jf.Version +
+									"//" + jf.Name +
+									" --upload-file " + jf.Path +
+									" -k -u " + sfLogin + ":" + sfPass +
+									" --request PUT"
+								w.WriteString(curlStr + "\n")
+							} else {
+								artifactIds = append(artifactIds, jf.ArtifactID)
 							}
 						}
 					}
@@ -375,6 +415,23 @@ func Parse(path string) (*jarField, error) {
 
 	b, _ := io.ReadAll(file)
 	var project jarField
+
+	err = xml.Unmarshal(b, &project)
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
+}
+
+func ParseParent(path string) (*jarFieldParent, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	b, _ := io.ReadAll(file)
+	var project jarFieldParent
 
 	err = xml.Unmarshal(b, &project)
 	if err != nil {
