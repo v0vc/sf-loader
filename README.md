@@ -24,7 +24,7 @@ You need to add .env file with this data:
 
 ## How to use
 
-sf-loader requires [Go](https://go.dev/dl/) v1.21.5+ to build.
+sf-loader requires [Go](https://go.dev/dl/) v1.22 to build.
 
 Run command line in project directory with command:
 
