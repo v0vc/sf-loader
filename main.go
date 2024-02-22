@@ -351,6 +351,9 @@ func main() {
 								w.WriteString(mvnStr + "\n")
 								continue
 							}
+							if len(byVer) > 2 {
+								fmt.Println("WARN: " + byVer[0].ArtifactID + " has more artefacts with one version: " + byVer[0].Version)
+							}
 						}
 					}
 				}
