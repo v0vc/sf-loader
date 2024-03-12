@@ -15,8 +15,7 @@ tasks:
     - gofumpt -w -l .
 
   lint:
-    - go vet ./...
-    - staticcheck ./...
+    - golangci-lint run -v
 
   update:
     - go get -u all

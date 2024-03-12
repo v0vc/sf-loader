@@ -100,7 +100,10 @@ func main() {
 										" --upload-file " + jf.Path +
 										" -k -u " + sfLogin + ":" + sfPass +
 										" --request PUT"
-									w.WriteString(curlStr + "\n")
+									_, err = w.WriteString(curlStr + "\n")
+									if err != nil {
+										log.Println(err)
+									}
 								} else {
 									artifactIds = append(artifactIds, jf.ArtifactID)
 								}
@@ -126,7 +129,10 @@ func main() {
 								" --upload-file " + jf.Path +
 								" -k -u " + sfLogin + ":" + sfPass +
 								" --request PUT"
-							w.WriteString(curlStr + "\n")
+							_, err = w.WriteString(curlStr + "\n")
+							if err != nil {
+								log.Println(err)
+							}
 						} else {
 							artifactIds = append(artifactIds, jf.ArtifactID)
 						}
@@ -174,7 +180,10 @@ func main() {
 											" --upload-file " + pomField.Path +
 											" -k -u " + sfLogin + ":" + sfPass +
 											" --request PUT"
-										w.WriteString(curlStr + "\n")
+										_, err = w.WriteString(curlStr + "\n")
+										if err != nil {
+											log.Println(err)
+										}
 									} else {
 										artifactIds = append(artifactIds, pomField.ArtifactID)
 									}
@@ -200,7 +209,10 @@ func main() {
 									" --upload-file " + jf.Path +
 									" -k -u " + sfLogin + ":" + sfPass +
 									" --request PUT"
-								w.WriteString(curlStr + "\n")
+								_, err = w.WriteString(curlStr + "\n")
+								if err != nil {
+									log.Println(err)
+								}
 							} else {
 								artifactIds = append(artifactIds, jf.ArtifactID)
 							}
@@ -245,7 +257,10 @@ func main() {
 											" --upload-file " + pomField.Path +
 											" -k -u " + sfLogin + ":" + sfPass +
 											" --request PUT"
-										w.WriteString(curlStr + "\n")
+										_, err = w.WriteString(curlStr + "\n")
+										if err != nil {
+											log.Println(err)
+										}
 									} else {
 										artifactIds = append(artifactIds, pomField.ArtifactID)
 									}
@@ -271,7 +286,10 @@ func main() {
 									" --upload-file " + jf.Path +
 									" -k -u " + sfLogin + ":" + sfPass +
 									" --request PUT"
-								w.WriteString(curlStr + "\n")
+								_, err = w.WriteString(curlStr + "\n")
+								if err != nil {
+									log.Println(err)
+								}
 							} else {
 								artifactIds = append(artifactIds, jf.ArtifactID)
 							}
@@ -323,7 +341,10 @@ func main() {
 									" -Dfile=" + byVer[0].Path +
 									" -DpomFile=" + byVer[0].Path +
 									" -s settings.xml"
-								w.WriteString(mvnStr + "\n")
+								_, err = w.WriteString(mvnStr + "\n")
+								if err != nil {
+									log.Println(err)
+								}
 								continue
 							}
 							if len(byVer) == 2 {
@@ -348,7 +369,10 @@ func main() {
 									" -Dfile=" + jarFile +
 									" -DpomFile=" + pomFile +
 									" -s settings.xml"
-								w.WriteString(mvnStr + "\n")
+								_, err = w.WriteString(mvnStr + "\n")
+								if err != nil {
+									log.Println(err)
+								}
 								continue
 							}
 							if len(byVer) > 2 {
@@ -382,16 +406,25 @@ func main() {
 					fn := fns[len(fns)-1]
 					res = append(res, strings.Trim(fn, "\""))
 					curlStr := "curl" + " -k -u " + nexusLogin + ":" + nexusPass + " -O" + url
-					w.WriteString(curlStr + "\n")
+					_, err = w.WriteString(curlStr + "\n")
+					if err != nil {
+						log.Println(err)
+					}
 				}
 			}
 		}
 		for _, tgz := range res {
 			curlStr := "curl" + " -k -u " + sfLogin + ":" + sfPass + " -F " + "npm.asset=@" + tgz + " " + sfNpmUrl
-			w.WriteString(curlStr + "\n")
+			_, err = w.WriteString(curlStr + "\n")
+			if err != nil {
+				log.Println(err)
+			}
 		}
 	}
-	w.WriteString("pause" + "\n")
+	_, err = w.WriteString("pause" + "\n")
+	if err != nil {
+		log.Println(err)
+	}
 	w.Flush()
 }
 
