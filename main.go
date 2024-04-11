@@ -341,7 +341,7 @@ func main() {
 							if !u {
 								continue
 							}
-							if len(byVer) == 1 {
+							if len(byVer) == 1 && byVer[0].Path != "" {
 								mvnStr := "call mvn deploy:deploy-file" +
 									" -Dmaven.wagon.http.ssl.insecure=true" +
 									" -Dmaven.wagon.http.ssl.allowall=true" +
@@ -382,9 +382,11 @@ func main() {
 									" -Dfile=" + jarFile +
 									" -DpomFile=" + pomFile +
 									" -s settings.xml"
-								_, err = w.WriteString(mvnStr + "\n")
-								if err != nil {
-									log.Println(err)
+								if pomFile != "" && jarFile != "" {
+									_, err = w.WriteString(mvnStr + "\n")
+									if err != nil {
+										log.Println(err)
+									}
 								}
 								continue
 							}
