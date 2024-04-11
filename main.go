@@ -251,6 +251,13 @@ func main() {
 							pomField.ArtifactID = pomParent.Parent.ArtifactID
 						}
 					}
+					if strings.Contains(pomField.Version, "${") {
+						pomProp, e := ParseProp(files[i+1])
+						if e != nil {
+							continue
+						}
+						pomField.Version = pomProp.Properties.Version
+					}
 					pomField.Name = filepath.Base(file)
 					pomField.Path = file
 					if len(filterGroup) >= 1 && filterGroup[0] != "" {
