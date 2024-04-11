@@ -33,6 +33,12 @@ type jarFieldParent struct {
 	} `xml:"parent,omitempty"`
 }
 
+type jarFieldProp struct {
+	Properties struct {
+		Version string `xml:"artifactVersion,omitempty"`
+	} `xml:"properties,omitempty"`
+}
+
 func main() {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -160,6 +166,13 @@ func main() {
 						if pomField.ArtifactID == "" && pomParent.Parent.ArtifactID != "" {
 							pomField.ArtifactID = pomParent.Parent.ArtifactID
 						}
+					}
+					if strings.Contains(pomField.Version, "${") {
+						pomProp, e := ParseProp(file)
+						if e != nil {
+							continue
+						}
+						pomField.Version = pomProp.Properties.Version
 					}
 					pomField.Name = filepath.Base(file)
 					pomField.Path = file
@@ -468,6 +481,23 @@ func ParseParent(path string) (*jarFieldParent, error) {
 
 	b, _ := io.ReadAll(file)
 	var project jarFieldParent
+
+	err = xml.Unmarshal(b, &project)
+	if err != nil {
+		return nil, err
+	}
+	return &project, nil
+}
+
+func ParseProp(path string) (*jarFieldProp, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	b, _ := io.ReadAll(file)
+	var project jarFieldProp
 
 	err = xml.Unmarshal(b, &project)
 	if err != nil {
